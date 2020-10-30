@@ -274,3 +274,43 @@ https://qiita.com/Haaamaaaaa/items/709d774698082e9d342d
 >>> output.size()
 torch.Size([10, 3, 4])
 ```
+
+
+## torch.eye()
+
+対角行列を生成
+
+```python
+>>> torch.eye(3)
+tensor([[ 1.,  0.,  0.],
+        [ 0.,  1.,  0.],
+        [ 0.,  0.,  1.]])
+
+>>> torch.eye(3).view(-1)
+tensor([1., 0., 0., 0., 1., 0., 0., 0., 1.])
+```
+
+## torch.max()
+
+最大値を取り出す。第2引数で次元を指定
+
+```
+>>> a = torch.randn(4, 5)
+>>> a
+tensor([[-0.9413, -0.2067, -0.9084,  0.4732, -0.6856],
+        [ 0.7210, -1.5712,  1.8576, -0.8501, -1.6156],
+        [ 0.0607, -0.7049, -0.3230, -0.1158,  0.9874],
+        [ 1.5044,  0.9751,  1.3197,  2.3033, -0.7163]])
+>>> torch.max(a, 1)
+torch.return_types.max(
+values=tensor([0.4732, 1.8576, 0.9874, 2.3033]),
+indices=tensor([3, 2, 4, 3]))
+>>> torch.max(a, 0)
+torch.return_types.max(
+values=tensor([1.5044, 0.9751, 1.8576, 2.3033, 0.9874]),
+indices=tensor([3, 3, 1, 3, 2]))
+>>> _, pred = torch.max(a, 1)
+>>> pred
+tensor([3, 2, 4, 3])
+```
+
