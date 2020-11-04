@@ -314,3 +314,15 @@ indices=tensor([3, 3, 1, 3, 2]))
 tensor([3, 2, 4, 3])
 ```
 
+## ファイル読み込み
+
+```python
+>>> import torch
+>>> import os
+>>> folders = [dir for dir in sorted(os.listdir("Data/five_position_class")) if os.path.isdir(f"Data/five_position_class/{dir}")]
+>>> folders
+['0', 'l45', 'l90', 'r45', 'r90']
+>>> classes = {folder:i for i, folder in enumerate(folders)}
+>>> classes
+{'0': 0, 'l45': 1, 'l90': 2, 'r45': 3, 'r90': 4}
+```
