@@ -137,6 +137,7 @@ dependencies:
     - path==15.0.0
     - path-py==12.5.0
     - plyfile==0.7.2
+    - pyrealsense2==2.39.0.2342
     - pyyaml==5.3.1
     - sklearn==0.0
     - tqdm==4.51.0
