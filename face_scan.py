@@ -1,5 +1,8 @@
 # five_position_class
 # 顔のデータを撮影して指定のクラスにpcdファイルを保存
+# Usage: -> % python3 get_face_scan.py TestData/five_position_classes/r45/valid
+# 第二引数で保存名を指定
+# Usage: -> % python3 get_face_scan.py TestData/five_position_classes/r45/valid test
 
 import pyrealsense2 as rs
 import numpy as np
@@ -10,6 +13,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly
 from path import Path
+import os
+import sys
 
 def pcshow(xs,ys,zs):
     data=[go.Scatter3d(x=xs, y=ys, z=zs,
@@ -67,7 +72,7 @@ def show_img(img, dep_img):
     plt.close()
 
 def dbscan(pcd):
-    labels = np.array(pcd.cluster_dbscan(eps=0.005, min_points=10, print_progress=True))
+    labels = np.array(pcd.cluster_dbscan(eps=0.01, min_points=10, print_progress=True))
     print(f"pcd.points.shape(): {np.array(pcd.points).shape}")
     print(f"labels.shape(): {labels.shape}")
 
@@ -86,11 +91,15 @@ def dbscan(pcd):
         part_of_pcd.points = o3d.utility.Vector3dVector(np.array(pcd.points)[mask])
         print(f"label: {label}")
         o3d.visualization.draw_geometries([part_of_pcd])
+        points_size = len(np.array(part_of_pcd.points))
+        if label >= 0 and points_size > 1000:
+            val = label
         if label >= 3:
             break
 
-    print("choose face label:")
-    val = int(input())
+    # print("choose face label:")
+    # val = int(input())
+    # val = 1
 
     mask = labels == val
     face = o3d.geometry.PointCloud()
@@ -99,6 +108,18 @@ def dbscan(pcd):
     o3d.visualization.draw_geometries([face])
     return face
 
+def crop(points, pcd):
+    # show by plotly
+    x, y, z = points[:, 0], points[:, 1], points[:, 2]
+    pcshow(x, y, z)
+
+    crop_point = float(input("Crop point: "))
+
+    # new_points = points[points[:, 1] > -0.12][:600]
+    # new_points = points[points[:, 1] > -0.06][:600] # Realsenseから60cm
+    new_points = points[points[:, 1] > crop_point][:600] # 顔だけの場合は大体600ポイントぐらい
+    pcd.points = o3d.utility.Vector3dVector(new_points)
+    return pcd
 
 # ストリーム(Depth/Color)の設定
 config = rs.config()
@@ -159,7 +180,7 @@ mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
         size=0.6, origin=[0, 0, -0.5])
 
 print('your taked pcd:')
-o3d.visualization.draw_geometries([pcd, mesh_frame])
+# o3d.visualization.draw_geometries([pcd, mesh_frame])
 
 face_pcd = dbscan(pcd)
 
@@ -173,30 +194,39 @@ o3d.visualization.draw_geometries([down_sample_face])
 # Limited points
 points = np.array(down_sample_face.points)
 
-# show by plotly
-x, y, z = points[:, 0], points[:, 1], points[:, 2]
-pcshow(x, y, z)
+print(f"points.shape: {points.shape}")
 
-crop_point = float(input("Crop point: "))
+# 顔だけ切り取る場合はコメントを外す
+down_sample_face = crop(points, down_sample_face)
 
-# points = points[points[:, 1] > -0.12][:600]
-# points = points[points[:, 1] > -0.06][:600] # Realsenseから60cm
-points = points[points[:, 1] > crop_point][:600] # Realsenseから60cm
-down_sample_face.points = o3d.utility.Vector3dVector(points)
 print('Limited points face...')
 o3d.visualization.draw_geometries([down_sample_face])
 
-
 shape = np.array(down_sample_face.points).shape
 
-print(f'face_pcd.shape: {shape}')
+print(f'down_sample_face.shape: {shape}')
 
-root_path = Path("TestData/five_faces_class")
+# root_path = Path("TestData/five_faces_class")
+# root_path = Path("TestData/five_position_classes")
+root_path = Path(sys.argv[1]) # ←"TestData/five_position_classes/0/train"
 
-path = input('Put path and filename:')
-path += ".pcd"
-o3d.io.write_point_cloud(root_path/path, face_pcd)
-print(f'saved at [{root_path/path}].')
+if len(sys.argv) == 3:
+    name = sys.argv[2] + ".pcd"
+else:
+    name = str(len(os.listdir(root_path))) + ".pcd"
+
+path = root_path/name
+
+# path = input('Put path and filename(ex...[r45/train/x]):')
+
+# face_pcd 首下もある
+# down_sample_face 首上だけ
+o3d.io.write_point_cloud(path, down_sample_face)
+print(f'saved at [{path}]')
 
 # ストリーミング停止
 pipeline.stop()
+
+### MEMO
+# 今後は首上と胸上のデータ両方保存してみる?
+# 胸上は大体1800~2000ぐらい→y軸についてソートして1700まで点を削減してみるのがいいかも
