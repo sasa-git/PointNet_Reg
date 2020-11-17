@@ -326,3 +326,16 @@ tensor([3, 2, 4, 3])
 >>> classes
 {'0': 0, 'l45': 1, 'l90': 2, 'r45': 3, 'r90': 4}
 ```
+
+# ツール
+
+## Visdom
+
+[参考](https://qiita.com/yasudadesu/items/1dda5f9d1708b6d4d923)
+
+
+`% -> visdom` でサーバを起動
+
+## collect_env
+
+`-> % python ~/anaconda3/envs/pytorch/lib/python3.7/site-packages/torch/utils/collect_env.py `
