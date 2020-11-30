@@ -1,3 +1,5 @@
+# Usage: -> % python -B estimate.py Data/five_position_classes_head/r45/valid/6.pcd
+
 import open3d as o3d
 from model import PointNet
 from dataset import Normalize
@@ -13,7 +15,7 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
 
-    print('loading model')
+    print('loading model...')
     pointnet = PointNet(classes=5)
     pointnet.load_state_dict(torch.load('nbs/pnt_model_500.pth', map_location=device))
     pointnet.to(device)
