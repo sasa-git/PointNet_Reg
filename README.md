@@ -339,3 +339,18 @@ tensor([3, 2, 4, 3])
 ## collect_env
 
 `-> % python ~/anaconda3/envs/pytorch/lib/python3.7/site-packages/torch/utils/collect_env.py `
+
+https://github.com/pytorch/pytorch/blob/master/torch/utils/collect_env.py
+
+# 参考
+
+[PointNet 論文](https://arxiv.org/abs/1612.00593)
+
+[Open3D ドキュメント](http://www.open3d.org/docs/release/index.html)
+
+[PyTorch ドキュメント](https://pytorch.org/docs/stable/index.html)
+
+[Deep Learning on Point clouds: Implementing PointNet in Google Colab](https://towardsdatascience.com/deep-learning-on-point-clouds-implementing-pointnet-in-google-colab-1fd65cd3a263)
+
+[点群DNN、3D DNN入門](https://qiita.com/arutema47/items/cda262c61baa953a97e9)
+
