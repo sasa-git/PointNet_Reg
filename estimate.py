@@ -6,6 +6,7 @@ from dataset import Normalize
 import torch
 import numpy as np
 import sys
+import time
 
 # def estimate(path, model):
 #     # TODO: 推測メソッドモジュールの実装
@@ -13,7 +14,7 @@ import sys
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(device)
+    # print(device)
 
     print('loading model...')
     pointnet = PointNet(classes=5)
@@ -26,16 +27,16 @@ if __name__ == "__main__":
     pcd = o3d.io.read_point_cloud(path)
     points = np.array(pcd.points)
 
+    start = time.time()
     points = Normalize()(points)
     X = torch.from_numpy(points)
     X = X.unsqueeze(0)
     X_tensor = X.to(device).float()
-    # print(X_tensor.size())
-    # print(X_tensor.device)
-
     with torch.no_grad():
         y, __, __ = pointnet(X_tensor.transpose(1,2))
         _, pred = torch.max(y.data, 1)
 
+    exec_time = time.time() - start
+
     label = {0: '0', 1: 'l45', 2: 'l90', 3: 'r45', 4: 'r90'}
-    print(f"predicted: {label[int(pred)]}")
+    print(f"predicted: {label[int(pred)]}   exec time: {exec_time:.3f}")
