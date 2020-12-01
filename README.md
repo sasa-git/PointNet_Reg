@@ -327,6 +327,10 @@ tensor([3, 2, 4, 3])
 {'0': 0, 'l45': 1, 'l90': 2, 'r45': 3, 'r90': 4}
 ```
 
+## Pytorch.scheduler
+
+https://wonderfuru.com/scheduler/
+
 # ツール
 
 ## Visdom
