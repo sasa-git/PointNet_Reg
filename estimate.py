@@ -14,7 +14,7 @@ import time
 
 if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # print(device)
+    print(f'using {device}')
 
     print('loading model...')
     pointnet = PointNet(classes=5)
@@ -39,4 +39,4 @@ if __name__ == "__main__":
     exec_time = time.time() - start
 
     label = {0: '0', 1: 'l45', 2: 'l90', 3: 'r45', 4: 'r90'}
-    print(f"predicted: {label[int(pred)]}   exec time: {exec_time:.3f}")
+    print(f"predicted: {label[int(pred)]}   exec time: {exec_time * 1000:.3f}ms")
