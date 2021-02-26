@@ -15,6 +15,20 @@ import plotly
 from path import Path
 import os
 import sys
+import time
+from argparse import ArgumentParser
+
+def parser():
+    usage = f'Usage: python {__file__} OUTPUT_DIR FILE_NAME [--verbose] [--time_watch]'
+    argparser = ArgumentParser(usage=usage)
+    argparser.add_argument('class_dir', type=str, help='output dir')
+    argparser.add_argument('-f', '--fname', type=str, help='output file name')
+    argparser.add_argument('-a', '--auto', action='store_true', help='enable auto crop while DBSCAN ラベルは各撮影環境にて設定')
+    argparser.add_argument('-l', '--label', type=int, default=0, help='set label when auto mode. default: 0 auto mode使用時に設定')
+    argparser.add_argument('-v', '--verbose', action='store_true', help='enable transform visualize mode')
+    argparser.add_argument('-t', '--time_watch', action='store_true', help='enable prosess time')
+    args = argparser.parse_args()
+    return args
 
 def pcshow(xs,ys,zs):
     data=[go.Scatter3d(x=xs, y=ys, z=zs,
@@ -71,41 +85,46 @@ def show_img(img, dep_img):
     plt.show()
     plt.close()
 
-def dbscan(pcd):
-    labels = np.array(pcd.cluster_dbscan(eps=0.01, min_points=10, print_progress=True))
+def dbscan(pcd, auto_mode=False, label_val=0):
+    labels = np.array(pcd.cluster_dbscan(eps=0.01, min_points=80, print_progress=True))
     print(f"pcd.points.shape(): {np.array(pcd.points).shape}")
     print(f"labels.shape(): {labels.shape}")
 
     max_label = labels.max()
     print(f"point cloud has {max_label + 1} clusters")
     print("First 5 labels:",labels[:10])
-    colors = plt.get_cmap("tab20")(labels / (max_label if max_label > 0 else 1))
-    colors[labels < 0] = 0
-    pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
-    # o3d.visualization.draw_geometries([pcd])
+
+    if auto_mode ==False:
+        colors = plt.get_cmap("tab20")(labels / (max_label if max_label > 0 else 1))
+        colors[labels < 0] = 0
+        pcd.colors = o3d.utility.Vector3dVector(colors[:, :3])
+        o3d.visualization.draw_geometries([pcd])
 
     for label in np.unique(labels):
         mask = labels == label
         
         part_of_pcd = o3d.geometry.PointCloud()
         part_of_pcd.points = o3d.utility.Vector3dVector(np.array(pcd.points)[mask])
-        print(f"label: {label}")
-        o3d.visualization.draw_geometries([part_of_pcd])
+        if auto_mode == False:
+            print(f"label: {label}")
+            o3d.visualization.draw_geometries([part_of_pcd])
         points_size = len(np.array(part_of_pcd.points))
-        if label >= 0 and points_size > 1000:
+        if label >= 0 and label <= 3 and points_size > 1000:
             val = label
-        if label >= 3:
+        if label >= 10:
             break
-
-    # print("choose face label:")
-    # val = int(input())
-    # val = 1
+    
+    if auto_mode == True:
+        val = label_val
+    else:
+        print("choose face label:")
+        val = int(input())
 
     mask = labels == val
     face = o3d.geometry.PointCloud()
     face.points = o3d.utility.Vector3dVector(np.array(pcd.points)[mask])
     print(f"you choosed: {val}")
-    o3d.visualization.draw_geometries([face])
+    # o3d.visualization.draw_geometries([face])
     return face
 
 def crop(points, pcd):
@@ -122,10 +141,13 @@ def crop(points, pcd):
     return pcd
 
 def crop_bust(points, pcd, limit):
+    assert len(points) > limit, f"expected len(points) > {limit}, but was {len(points)}:("
     sort = points[:, 1].argsort()
     new_points = points[sort][::-1][:limit]
     pcd.points = o3d.utility.Vector3dVector(new_points)
     return pcd
+
+args = parser()
 
 # ストリーム(Depth/Color)の設定
 config = rs.config()
@@ -170,6 +192,15 @@ while True:
         cv2.destroyAllWindows()
         break
 
+# args = parser()
+# time_watch = False
+time_watch = args.time_watch
+show_verbose = args.verbose
+
+if time_watch == True:
+    print('Watching Time')
+    start_time = time.time()
+
 # Depthイメージだけで点群生成
 print(dep_img.shape)
 color_image = o3d.geometry.Image(img)
@@ -185,40 +216,49 @@ pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
 mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
         size=0.6, origin=[0, 0, -0.5])
 
-print('your taked pcd:')
-# o3d.visualization.draw_geometries([pcd, mesh_frame])
+if show_verbose == True:
+    print('your taked pcd:')
+    o3d.visualization.draw_geometries([pcd, mesh_frame])
 
-face_pcd = dbscan(pcd)
+face_pcd = dbscan(pcd, auto_mode=args.auto, label_val=args.label)
 
 # Downsample
-# voxel_size=0.01---600pointsぐらい
-# voxel_size=0.005---2400ぐらい
 down_sample_face = face_pcd.voxel_down_sample(voxel_size=0.01)
-print('Down sampled face...')
-o3d.visualization.draw_geometries([down_sample_face])
 
 # Limited points
 points = np.array(down_sample_face.points)
-
 print(f"points.shape: {points.shape}")
+
+if show_verbose == True:
+    print('Down sampled face...')
+    o3d.visualization.draw_geometries([down_sample_face])
 
 # 顔だけ切り取る場合はコメントを外す
 # down_sample_face = crop(points, down_sample_face)
 down_sample_face = crop_bust(points, down_sample_face, 1000)
 
 print('Limited points face...')
-o3d.visualization.draw_geometries([down_sample_face])
-
 shape = np.array(down_sample_face.points).shape
-
 print(f'down_sample_face.shape: {shape}')
+if not time_watch == True:
+    o3d.visualization.draw_geometries([down_sample_face])
+
+if time_watch == True:
+    exec_time = time.time() - start_time
+    print(f'exec time: {exec_time * 1000:.3f}ms"')
 
 # root_path = Path("TestData/five_faces_class")
 # root_path = Path("TestData/five_position_classes")
-root_path = Path(sys.argv[1]) # ←"TestData/five_position_classes/0/train"
+# root_path = Path(sys.argv[1]) # ←"TestData/five_position_classes/0/train"
+root_path = Path(args.class_dir)
 
-if len(sys.argv) == 3:
-    name = sys.argv[2] + ".pcd"
+# if len(sys.argv) == 3:
+#     name = sys.argv[2] + ".pcd"
+# else:
+#     name = str(len(os.listdir(root_path))) + ".pcd"
+
+if args.fname:
+    name = args.fname + ".pcd"
 else:
     name = str(len(os.listdir(root_path))) + ".pcd"
 
@@ -235,3 +275,4 @@ pipeline.stop()
 
 ### MEMO
 # 今後は首上と胸上のデータ両方保存してみる?
+# 胸上は大体1800~2000ぐらい→y軸についてソートして1700まで点を削減してみるのがいいかも
