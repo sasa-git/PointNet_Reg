@@ -1,5 +1,69 @@
 # PointNet_Reg
 
+卒業研究で使ったコード置き場
+
+RealSenseで撮影した深度画像を元に頭部の点群データを作り、頭部がカメラに対してどこを向いているか推定します。
+
+研究で使った点群データ、論文、参考にしたサイトとかは一通り研究室のNASにあります。
+
+**探せ！この世の全てをそこに置いてきた！**
+
+最悪、GoogleDriveのダウンロードリンクを送ります。
+
+# 大体の使い方
+
+## 頭部のスキャン
+
+```
+# 顔のデータを撮影して指定のディレクトリにpcdファイルを保存
+# Usage: -> % python3 head_scan.py TestData/five_position_classes/r45/valid
+# 第二引数で保存名を指定
+# Usage: -> % python3 head_scan.py TestData/five_position_classes/r45/valid test
+```
+
+## データ構造
+
+データ構造の説明については、研究室のNASにあります。
+
+`研究資料→ソースコード→notes→notes.md`を読んでください。
+
+研究に使ったデータは、`研究資料→ソースコード→TestData.zip`にあります。
+
+
+## 学習
+
+`nbs/PointNetClass_five_heads.ipynb`で実行。
+
+`train(pointnet, train_loader, valid_loader, save=False)`ここと、
+
+`torch.save(pointnet.state_dict(), "pnt_model_500_3.pth")`ここで、saveするか、保存するモデルの名称はどうするかを手動で設定しておくこと！
+
+## その他のファイル
+
+`dataset.py`
+- データセットの構造がわかります
+- 事前に学習したモデルを元に、混合行列も表示してくれます。
+
+`estimate.py`
+- 推定したいpcdファイルを元にどこを向いているか推定してくれます。
+
+```
+# Usage: -> % python -B estimate.py Data/five_position_classes_head/r45/valid/6.pcd
+```
+
+`model.py`
+- PointNetがどんな入力に対して、どんな出力が出てくるかが確認できます。
+
+`scanner.py`
+- シンプルなコードで手っ取り早くRealSenseで撮影して、3次元データを確認できます。
+        RealSenseやOpen3dの動作を把握する時に使えます。
+
+`show_pcd.py`
+- pcdファイルを読み込んで、データの可視化をします。
+
+```
+# Usage: -> % python3 show_pcd.py TestData/five_position_classes/0/train/0.pcd 
+```
 
 # Note
 
