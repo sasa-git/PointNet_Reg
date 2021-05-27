@@ -1,5 +1,5 @@
 # five_position_class
-# 顔のデータを撮影して指定のクラスにpcdファイルを保存
+# 顔のデータを撮影して指定のディレクトリにpcdファイルを保存
 # Usage: -> % python3 head_scan.py TestData/five_position_classes/r45/valid
 # 第二引数で保存名を指定
 # Usage: -> % python3 head_scan.py TestData/five_position_classes/r45/valid test
